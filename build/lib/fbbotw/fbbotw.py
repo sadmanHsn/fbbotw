@@ -8,18 +8,6 @@ IMPORT_ERROR = ("Couldn't import PAGE_ACCESS_TOKEN. "
 
 HEADER = {"Content-Type": "application/json"}
 
-# Not using Django
-PAGE_ACCESS_TOKEN = os.getenv('PAGE_ACCESS_TOKEN', False)
-if not PAGE_ACCESS_TOKEN:
-    try:
-        from django.conf import settings
-        PAGE_ACCESS_TOKEN = settings.PAGE_ACCESS_TOKEN
-    except ImportError:
-        # Not using django
-        raise ImportError(IMPORT_ERROR)
-    except AttributeError:
-        # Using django but did defined the config var PAGE_ACCESS_TOKEN
-        raise ImportError(IMPORT_ERROR)
 
 THREAD_SETTINGS_URL = ("https://graph.facebook.com/v3.1/me/"
                        "thread_settings?access_token={access_token}")
@@ -31,6 +19,21 @@ GRAPH_URL = "https://graph.facebook.com/v3.1/{fbid}"
 
 MESSAGES_ATTACHMENT_URL = ("https://graph.facebook.com/v3.1/me/"
                            "message_attachments?access_token={access_token}")
+
+def PAGE_ACCESS_TOKEN():
+    # Not using Django
+    page_access_token = os.getenv('PAGE_ACCESS_TOKEN', False)
+    if not page_access_token:
+        try:
+            from django.conf import settings
+            page_access_token = settings.PAGE_ACCESS_TOKEN
+        except ImportError:
+            # Not using django
+            raise ImportError(IMPORT_ERROR)
+        except AttributeError:
+            # Using django but did defined the config var PAGE_ACCESS_TOKEN
+            raise ImportError(IMPORT_ERROR)
+    return page_access_token
 
 
 #############################################
@@ -70,7 +73,7 @@ def get_user_information(fbid, extra_fields=[]):
     payload['fields'] = (
         ",".join(fields)
     )
-    payload['access_token'] = PAGE_ACCESS_TOKEN
+    payload['access_token'] = PAGE_ACCESS_TOKEN()
     user_info = requests.get(user_info_url, payload).json()
     return user_info
 
@@ -97,7 +100,7 @@ def post_settings(greeting_text):
     text and start button.
     """
     # Set the greeting texts
-    url = THREAD_SETTINGS_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = THREAD_SETTINGS_URL.format(access_token=PAGE_ACCESS_TOKEN())
     txtpayload = dict()
     txtpayload['setting_type'] = 'greeting'
     txtpayload['greeting'] = {'text': greeting_text}
@@ -106,7 +109,7 @@ def post_settings(greeting_text):
         url, headers=HEADER, data=data
     )
     # Set the start button
-    url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN())
     btpayload = dict()
     btpayload['get_started'] = {'payload': 'USER_START'}
     data = json.dumps(btpayload)
@@ -159,7 +162,7 @@ def post_greeting_text(greeting_texts):
     :facebook docs: `/greeting-text <https://developers.facebook.com/docs/\
     messenger-platform/messenger-profile/greeting-text>`_
     """
-    url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN())
     payload = dict()
     payload['greeting'] = greeting_texts
     data = json.dumps(payload)
@@ -182,7 +185,7 @@ def post_start_button(payload='START'):
     :facebook docs: `/get-started-button <https://developers.facebook\
     .com/docs/messenger-platform/messenger-profile/get-started-button>`_
     """
-    url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN())
     payload_data = dict()
     payload_data['get_started'] = {'payload': payload}
     data = json.dumps(payload_data)
@@ -271,7 +274,7 @@ def post_persistent_menu(persistent_menu):
     :facebook docs: `/persistent-menu <https://developers.facebook.\
     com/docs/messenger-platform/messenger-profile/persistent-menu>`_
     """
-    url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN())
     payload = dict()
     payload["persistent_menu"] = persistent_menu
     data = json.dumps(payload)
@@ -298,7 +301,7 @@ def post_domain_whitelist(whitelisted_domains):
     :facebook docs: `/domain-whitelisting <https://developers.facebook.\
     com/docs/messenger-platform/messenger-profile/domain-whitelisting>`_
     """
-    url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN())
     payload = dict()
     payload['whitelisted_domains'] = whitelisted_domains
     data = json.dumps(payload)
@@ -317,7 +320,7 @@ def delete_domain_whitelist():
     :facebook docs: `/domain-whitelisting#delete <https://developers.facebook.\
     com/docs/messenger-platform/messenger-profile/domain-whitelisting#delete>`_
     """
-    url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN())
     payload = dict()
     payload['fields'] = ["whitelisted_domains"]
     data = json.dumps(payload)
@@ -340,7 +343,7 @@ def post_account_linking_url(account_linking_url):
     :facebook docs: `/account-linking-url <https://developers.facebook.\
     com/docs/messenger-platform/messenger-profile/account-linking-url>`_
     """
-    url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN())
     payload = dict()
     payload['account_linking_url'] = account_linking_url
     data = json.dumps(payload)
@@ -367,7 +370,7 @@ def post_payment_settings(privacy_url='', public_key='', test_users=None):
     com/docs/messenger-platform/messenger-profile/payment-settings>`_
     """
     if any([privacy_url.strip(), public_key.strip(), test_users]):
-        url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN)
+        url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN())
         payload = {"payment_settings": {}}
         if bool(privacy_url.strip()):
             payload['payment_settings']['privacy_url'] = privacy_url
@@ -410,7 +413,7 @@ def post_target_audience(countries, audience_type="all"):
     :facebook docs: `/target-audience <https://developers.facebook.\
     com/docs/messenger-platform/messenger-profile/target-audience>`_
     """
-    url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN())
     payload = {"target_audience": {}}
     payload["target_audience"]["audience_type"] = audience_type
     if audience_type in ['custom', 'none']:
@@ -435,7 +438,7 @@ def post_chat_extension_home_url(
     :facebook docs: `/home-url <https://developers.facebook.\
     com/docs/messenger-platform/messenger-profile/home-url>`_
     """
-    endpoint = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    endpoint = MESSENGER_PROFILE_URL.format(access_token=PAGE_ACCESS_TOKEN())
     payload = {"home_url": {}}
     payload["home_url"]["url"] = url
     payload["home_url"]["webview_height_ratio"] = "tall"
@@ -479,7 +482,7 @@ def post_sender_action(fbid, sender_action):
     :facebook docs: `/sender-actions <https://developers.facebook.\
     com/docs/messenger-platform/send-api-reference/sender-actions>`_
     """
-    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN())
     payload = dict()
     payload['recipient'] = {'id': fbid}
     payload['sender_action'] = sender_action
@@ -518,7 +521,7 @@ def post_text_message(fbid, message, messaging_type="RESPONSE", tag=None):
     :facebook docs: `/text-message <https://developers.facebook.\
     com/docs/messenger-platform/send-api-reference/text-message>`_
     """
-    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN())
     payload = dict()
     payload['messaging_type'] = messaging_type
     if bool(tag) or messaging_type == "MESSAGE_TAG":
@@ -595,7 +598,7 @@ def post_attachment(fbid, media_url, file_type,
     :facebook docs: `/contenttypes <https://developers.facebook.\
     com/docs/messenger-platform/send-api-reference/contenttypes>`_
     """
-    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN())
     payload = dict()
     payload['recipient'] = {'id': fbid}
     payload['messaging_type'] = messaging_type
@@ -644,7 +647,7 @@ def upload_reusable_attachment(media_url, file_type):
     developers.facebook.com/docs/messenger-platform/send-api-refe\
     rence#attachment_reuse>`_
     """
-    url = MESSAGES_ATTACHMENT_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSAGES_ATTACHMENT_URL.format(access_token=PAGE_ACCESS_TOKEN())
     payload = dict()
     attachment_payload = dict()
     attachment_payload['url'] = media_url
@@ -691,7 +694,7 @@ def post_reusable_attachment(fbid, attachment_id, file_type,
     developers.facebook.com/docs/messenger-platform/send-api-refe\
     rence#attachment_reuse>`_
     """
-    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN())
     payload = dict()
     payload['recipient'] = {'id': fbid}
     payload['messaging_type'] = messaging_type
@@ -960,7 +963,7 @@ def post_text_w_quickreplies(fbid, message, quick_replies,
     :facebook docs: `/quick-replies <https://developers.facebook\
     .com/docs/messenger-platform/send-api-reference/quick-replies>`_
     """
-    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN())
     payload = dict()
     payload["recipient"] = {"id": fbid}
     payload['messaging_type'] = messaging_type
@@ -1038,7 +1041,7 @@ def post_image_w_quickreplies(fbid, image_url, quick_replies,
     :facebook docs: `/quick-replies <https://developers.facebook\
     .com/docs/messenger-platform/send-api-reference/quick-replies>`_
     """
-    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN())
     payload = dict()
     payload["recipient"] = {"id": fbid}
     payload['messaging_type'] = messaging_type
@@ -1136,7 +1139,7 @@ def post_template_w_quickreplies(fbid, payload, quick_replies,
     :facebook docs: `/quick-replies <https://developers.facebook\
     .com/docs/messenger-platform/send-api-reference/quick-replies>`_
     """
-    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN())
     request_payload = dict()
     request_payload["recipient"] = {"id": fbid}
     request_payload['messaging_type'] = messaging_type
@@ -1220,7 +1223,7 @@ def post_button_template(fbid, text, buttons, sharable=True,
     :facebook docs: `/button-template <https://developers.facebook\
     .com/docs/messenger-platform/send-api-reference/button-template>`_
     """
-    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN())
     data = dict()
     data['recipient'] = {'id': fbid}
     data['messaging_type'] = messaging_type
@@ -1309,7 +1312,7 @@ def post_generic_template(fbid, title, image_url=None, subtitle=None,
     :facebook docs: `/generic-template <https://developers.facebook\
     .com/docs/messenger-platform/send-api-reference/generic-template>`_
     """
-    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN())
     data = dict()
     data['recipient'] = {'id': fbid}
     data['messaging_type'] = messaging_type
@@ -1416,7 +1419,7 @@ def post_generic_template_carousel(fbid, elements,
     :facebook docs: `/generic-template <https://developers.facebook\
     .com/docs/messenger-platform/send-api-reference/generic-template>`_
     """
-    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN())
     data = dict()
     data['recipient'] = {'id': fbid}
     data['messaging_type'] = messaging_type
@@ -1492,7 +1495,7 @@ def post_list_template(fbid, elements, buttons=None,
     :facebook docs: `/list-template <https://developers.facebook\
     .com/docs/messenger-platform/send-api-reference/list-template>`_
     """
-    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN())
     data = dict()
     data['recipient'] = {'id': fbid}
     data['messaging_type'] = messaging_type
@@ -1593,7 +1596,7 @@ def post_receipt_template(fbid, recipient_name, order_number, currency,
     :facebook docs: `/receipt-template <https://developers.facebook\
     .com/docs/messenger-platform/send-api-reference/receipt-template>`_
     """
-    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN())
     data = dict()
     data['recipient'] = {'id': fbid}
     data['messaging_type'] = messaging_type
@@ -1646,7 +1649,7 @@ def post_media_template(fbid, elements, messaging_type="RESPONSE", tag=None):
     :facebook docs: `/receipt-template <https://developers.facebook\
     .com/docs/messenger-platform/send-api-reference/receipt-template>`_
     """
-    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN())
     data = dict()
     data['recipient'] = {'id': fbid}
     data['messaging_type'] = messaging_type
@@ -1698,7 +1701,7 @@ def post_call_button(fbid, text, title, phone_number,
     :facebook docs: `/call-button <https://developers.facebook\
     .com/docs/messenger-platform/send-api-reference/call-button>`_
     """
-    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN)
+    url = MESSAGES_URL.format(access_token=PAGE_ACCESS_TOKEN())
     data = dict()
     data['recipient'] = {'id': fbid}
     data['messaging_type'] = messaging_type
